@@ -12,8 +12,10 @@ if __name__ == '__main__':
         click_count[index] += 1
         print(f"{click_count}번 클릭")
 
-        if(click_count[0] > 10):
-            uno.lef_blink(uno.LED_PINS, 5, 0.2)
+        if(click_count[0] % 5 == 0):
+            uno.buzzer_dash()
+        else:
+            uno.buzzer_dot()
 
 
     uno.add_on_click_event("a:1:u", lambda: a1u_click_callback(0))

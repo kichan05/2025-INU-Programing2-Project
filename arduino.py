@@ -13,6 +13,8 @@ class Arduino:
         self.LED_OFF = 1
         self.LED_PINS = [10, 11, 12, 13]
 
+        self.BUZZER_PIN = 3
+
         self.board.samplingOn(self.SAMPLING_INTERVAL)
 
         self.is_prev_clicked: dict[str, bool] = {}
@@ -63,3 +65,14 @@ class Arduino:
         analog_1 = self.board.get_pin(pin)
         analog_1.register_callback(clicked)
         analog_1.enable_reporting()
+
+    def buzzer_sound(self, length : float):
+        self.board.digital[self.BUZZER_PIN].write(self.LED_ON)
+        time.sleep(length)
+        self.board.digital[self.BUZZER_PIN].write(self.LED_OFF)
+
+    def buzzer_dot(self):
+        self.buzzer_sound(0.1)
+
+    def buzzer_dash(self):
+        self.buzzer_sound(0.5)
