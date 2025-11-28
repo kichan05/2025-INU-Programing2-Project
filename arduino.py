@@ -4,9 +4,8 @@ from typing import Iterable
 import pyfirmata2
 
 class Arduino:
-    def __init__(self, PORT: str, FPS: float):
+    def __init__(self, PORT: str):
         self.PORT = PORT
-        self.FPS = FPS
 
         self.board = pyfirmata2.Arduino(PORT)
 
@@ -72,14 +71,6 @@ class Arduino:
 
         current_pin_state = self.__pin_states[pin]
         return current_pin_state != 0
-
-    def is_button_pressed(self, pin: str) -> bool:
-        if(pin not in self.__pin_states):
-            self.__register_pin(pin)
-
-        current_pin_state = self.__pin_states[pin]
-        current_time = time.time()
-        return current_time - current_pin_state <= self.FPS
 
     def buzzer_sound(self, length : float):
         self.board.digital[self.BUZZER_PIN].write(self.LED_ON)
