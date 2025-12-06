@@ -2,11 +2,9 @@ import os
 import sys
 import time
 import tkinter as tk
-
 import pyfirmata2
 import pyttsx3
 from PIL import Image, ImageTk
-
 from model.database_manager import DatabaseManager
 from ui.game1_page import Game1Page
 from ui.game2_page import Game2Page
@@ -108,7 +106,8 @@ class ReactionGameApp:
     def show_frame(self, page_name):
         frame = self.frames[page_name]
         frame.tkraise()
-        if hasattr(frame, "on_show"): frame.on_show()
+        if hasattr(frame, "on_show"):
+            frame.on_show()
 
     # 입력 처리
     def handle_input(self, pin_num, data):
