@@ -13,7 +13,6 @@ from ui.player_enter_page import PlayerEntryPage
 from ui.result_page import ResultPage
 from ui.start_page import StartPage
 from ui.stats_page import StatsPage
-from util import calculate_score
 
 
 class ReactionGameApp:
@@ -121,15 +120,16 @@ class ReactionGameApp:
     def handle_input(self, pin_num, data):
         if data is not None and data < 0.2 and self.is_waiting:
             r_time = time.perf_counter() - self.start_time
-            score = calculate_score(r_time)
-
+            score = 0
+            
             if self.current_game_mode == "GAME1":
                 self.is_waiting = False
                 is_correct = (pin_num == self.game_target)
-                if not is_correct or r_time * 1000 < 180:
-                    score = 0
+                if is_correct and r_time * 1000 >= 180:
+                    score = int(max(0, 100 - (r_time - 0.18) * 500))
+                else:
                     r_time = 9999
-                
+
                 if self.current_page:
                     self.current_page.on_round_completed(r_time, score)
 
@@ -137,8 +137,9 @@ class ReactionGameApp:
                 self.is_waiting = False
                 user_guess = True if pin_num == 1 else False
                 is_correct = (user_guess == self.game_target)
-                if not is_correct or r_time * 1000 < 180:
-                    score = 0
+                if is_correct and r_time * 1000 >= 180:
+                    score = int(max(0, 100 - (r_time - 0.18) * 500))
+                else:
                     r_time = 9999
 
                 if self.current_page:

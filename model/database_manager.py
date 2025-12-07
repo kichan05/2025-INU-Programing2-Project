@@ -43,11 +43,17 @@ class DatabaseManager:
     def get_stats_by_player(self, game_mode, player_name):
         self.cursor.execute(
             """SELECT
-                played_at, score
+                DATE(played_at),
+                MAX(score),
+                AVG(score)
             FROM
                 history
             WHERE
                 game_mode = ? AND player_name = ?
+            GROUP BY
+                DATE(played_at)
+            ORDER BY
+                DATE(played_at) ASC
             """,
             (game_mode, player_name)
         )

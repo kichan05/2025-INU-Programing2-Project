@@ -117,33 +117,31 @@ class StatsPage(tk.Frame):
             messagebox.showinfo("Info", "No data found for this player.")
             return
 
-        dates = []
-        scores = []
-        cumulative_score = 0
-
-        for row in data:
-            dt_str = row[0]
-            score = row[1]
-            try:
-                dt_obj = datetime.datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
-                date_key = dt_obj.strftime("%m/%d")
-            except:
-                date_key = dt_str
-
-            cumulative_score += score
-            dates.append(date_key)
-            scores.append(cumulative_score)
-
-        self.canvas.create_text(self.controller.cx + 100, 250, text=f"TOTAL SCORE : {cumulative_score}",
+        dates = [datetime.datetime.strptime(row[0], "%Y-%m-%d").strftime("%m/%d") for row in data]
+        max_scores = [row[1] for row in data]
+        avg_scores = [row[2] for row in data]
+        
+        overall_best = max(max_scores) if max_scores else 0
+        self.canvas.create_text(self.controller.cx + 200, 250, text=f"BEST SCORE : {overall_best}",
                                 font=("Courier New", 30, "bold"), fill="black", tags="ui")
 
-        fig = plt.Figure(figsize=(8, 5), dpi=100)
+        fig = plt.Figure(figsize=(9, 5), dpi=100)
         ax = fig.add_subplot(111)
-        ax.plot(dates, scores, marker='o', linestyle='-', color='blue')
-        ax.set_title(f"{name}'s Progress")
-        ax.set_ylabel("Total Score")
-        ax.grid(True)
+
+        x = range(len(dates))
+        bar_width = 0.35
+        
+        ax.bar([i - bar_width/2 for i in x], max_scores, width=bar_width, label='Best Score', color='skyblue')
+        ax.bar([i + bar_width/2 for i in x], avg_scores, width=bar_width, label='Average Score', color='lightgreen')
+
+        ax.set_title(f"{name}'s Daily Progress ({mode})")
+        ax.set_ylabel("Score")
+        ax.set_xticks(x)
+        ax.set_xticklabels(dates)
+        ax.legend()
+        ax.grid(True, axis='y', linestyle='--', alpha=0.7)
+        fig.tight_layout()
 
         canvas = FigureCanvasTkAgg(fig, self)
         self.chart_widget = canvas.get_tk_widget()
-        self.canvas.create_window(self.controller.w * 0.35, 300, window=self.chart_widget, anchor="nw", tags="ui")
+        self.canvas.create_window(self.controller.w * 0.25, 300, window=self.chart_widget, anchor="nw", tags="ui")
