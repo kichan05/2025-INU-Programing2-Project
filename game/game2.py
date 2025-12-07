@@ -2,10 +2,10 @@ import random
 import time
 from tkinter import messagebox
 import cv2
-import mediapipe as mp
 import numpy as np
 from scipy.spatial import distance as dist
 from util import calculate_score
+
 
 def run_game2_engine(buzzer, cap, face_mesh, num_rounds, screen_w, screen_h):
     all_r_times = []
@@ -53,7 +53,8 @@ def run_game2_engine(buzzer, cap, face_mesh, num_rounds, screen_w, screen_h):
             ready_text_x = (win_w - ready_text_size[0]) // 2
             ready_text_y = (win_h // 2) + 50
             draw_text_with_outline(blank_frame, round_text, (round_text_x, round_text_y), 1.0, 2)
-            draw_text_with_outline(blank_frame, ready_text, (ready_text_x, ready_text_y), 1.5, 3, text_color=(0, 255, 255))
+            draw_text_with_outline(blank_frame, ready_text, (ready_text_x, ready_text_y), 1.5, 3,
+                                   text_color=(0, 255, 255))
             cv2.imshow(window_name, blank_frame)
             if cv2.waitKey(random.randint(1500, 3000)) == 27:
                 raise InterruptedError("Game exited during ready screen")
@@ -80,6 +81,18 @@ def run_game2_engine(buzzer, cap, face_mesh, num_rounds, screen_w, screen_h):
                 if results.multi_face_landmarks:
                     landmarks = results.multi_face_landmarks[0].landmark
                     mesh_points = [(int(pt.x * w), int(pt.y * h)) for pt in landmarks]
+
+                    for eye_points_indices in [LEFT_EYE, RIGHT_EYE]:
+                        for i, point_idx in enumerate(eye_points_indices):
+                            if 0 <= point_idx < len(mesh_points):
+                                pt = mesh_points[point_idx]
+                                color = (0, 255, 0)
+                                if i in [1, 2]:
+                                    color = (0, 255, 255)
+                                elif i in [4, 5]:
+                                    color = (255, 0, 0)
+                                cv2.circle(frame, pt, 2, color, -1) # Draw a filled circle of radius 2
+
                     left_ear = calculate_ear(LEFT_EYE, mesh_points)
                     right_ear = calculate_ear(RIGHT_EYE, mesh_points)
                     current_ear = (left_ear + right_ear) / 2.0
@@ -98,7 +111,8 @@ def run_game2_engine(buzzer, cap, face_mesh, num_rounds, screen_w, screen_h):
                         if buzzer: buzzer.write(1)
                         game_state = "MEASURING"
                 elif game_state == "MEASURING":
-                    draw_text_with_outline(frame, "BLINK NOW!", (center_x - 150, center_y), 2.0, 4, text_color=(0, 0, 255))
+                    draw_text_with_outline(frame, "BLINK NOW!", (center_x - 150, center_y), 2.0, 4,
+                                           text_color=(0, 0, 255))
                     if 0.0 < current_ear < 0.22:
                         end_time = time.time()
                         reaction_sec = end_time - start_time
@@ -125,11 +139,13 @@ def run_game2_engine(buzzer, cap, face_mesh, num_rounds, screen_w, screen_h):
                 s2_w, s2_h = cv2.getTextSize(feedback_line, font, scale2, thickness)[0]
                 s3_w, s3_h = cv2.getTextSize(score_line, font, scale1, thickness)[0]
                 padding_x, padding_y = 20, 20
-                draw_text_with_outline(frame, feedback_line, (w - s2_w - padding_x, h - s3_h - padding_y - 5), scale2, thickness, text_color=(0, 255, 255))
-                draw_text_with_outline(frame, score_line, (w - s3_w - padding_x, h - padding_y), scale1, thickness, text_color=(255, 255, 255))
+                draw_text_with_outline(frame, feedback_line, (w - s2_w - padding_x, h - s3_h - padding_y - 5), scale2,
+                                       thickness, text_color=(0, 255, 255))
+                draw_text_with_outline(frame, score_line, (w - s3_w - padding_x, h - padding_y), scale1, thickness,
+                                       text_color=(255, 255, 255))
                 cv2.imshow(window_name, frame)
                 if cv2.waitKey(1500) == 27:
-                     raise InterruptedError("Game exited during feedback")
+                    raise InterruptedError("Game exited during feedback")
 
     except (InterruptedError, IOError) as e:
         print(f"Game 2 interrupted or failed: {e}")
@@ -142,7 +158,8 @@ def run_game2_engine(buzzer, cap, face_mesh, num_rounds, screen_w, screen_h):
         if buzzer:
             try:
                 buzzer.write(1)
-            except: pass
+            except:
+                pass
         cv2.destroyAllWindows()
         for i in range(10): cv2.waitKey(1)
 
