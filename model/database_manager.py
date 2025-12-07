@@ -12,7 +12,7 @@ class DatabaseManager:
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS history (
                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                                 player_name TEXT, 
-                                reaction_time REAL, 
+                                reaction_time INTEGER, 
                                 played_at TEXT,
                                 game_mode TEXT,
                                 score INTEGER
@@ -21,13 +21,22 @@ class DatabaseManager:
 
     def save_record(self, game_mode, name, r_time, score):
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # r_time이 None일 경우 처리
+        if r_time is None:
+            reaction_ms = None
+            final_score = 0
+        else:
+            reaction_ms = int(r_time * 1000)
+            final_score = score
+
         self.cursor.execute(
             f"""INSERT INTO history
                     (game_mode, player_name, reaction_time, score, played_at)
                 VALUES
                     (?, ?, ?, ?, ?)
             """,
-            (game_mode, name, r_time * 1000, score, now)
+            (game_mode, name, reaction_ms, final_score, now)
         )
         self.conn.commit()
 
