@@ -25,12 +25,22 @@ class StatsPage(tk.Frame):
         self.ai_button = tk.Button(self, text="AI 분석 요청", font=Typography.FONT_NORMAL,
                                    command=self.request_ai_analysis)
         self.loading_ai_label = tk.Label(self, text="AI가 분석 중입니다...", font=Typography.FONT_NORMAL, bg="white", fg="blue")
-        self.ai_result_widget = tk.Message(self, text="", width=600, font=Typography.FONT_NORMAL,
-                                           bg="#F0F0F0", justify="left")
 
-        self.ai_button_win = self.canvas.create_window(controller.w - 200, 200, window=self.ai_button, state="hidden")
-        self.loading_ai_win = self.canvas.create_window(controller.cx, self.controller.h-150, window=self.loading_ai_label, state="hidden")
-        self.result_ai_win = self.canvas.create_window(controller.cx, self.controller.h-150, window=self.ai_result_widget, state="hidden")
+        # Create a frame for the scrollable text widget
+        self.ai_result_frame = tk.Frame(self, bg="#F0F0F0")
+        self.ai_result_text = tk.Text(self.ai_result_frame, wrap="word", height=5, width=70,
+                                      font=Typography.FONT_NORMAL, bg="#F0F0F0",
+                                      bd=0, highlightthickness=0)
+        self.ai_result_scrollbar = tk.Scrollbar(self.ai_result_frame, command=self.ai_result_text.yview)
+        self.ai_result_text.config(yscrollcommand=self.ai_result_scrollbar.set)
+        
+        self.ai_result_scrollbar.pack(side="right", fill="y")
+        self.ai_result_text.pack(side="left", fill="both", expand=True)
+
+
+        self.ai_button_win = self.canvas.create_window(self.controller.w - 200, 200, window=self.ai_button, state="hidden")
+        self.loading_ai_win = self.canvas.create_window(self.controller.cx, self.controller.h - 150, window=self.loading_ai_label, state="hidden")
+        self.result_ai_win = self.canvas.create_window(self.controller.cx, self.controller.h - 150, window=self.ai_result_frame, state="hidden")
 
 
     def on_show(self):
@@ -136,7 +146,11 @@ class StatsPage(tk.Frame):
             self.after(100, self.check_ai_thread)
         else:
             self.canvas.itemconfig(self.loading_ai_win, state="hidden")
-            self.ai_result_widget.config(text=self.analysis_content)
+            # Update the text widget with the new content
+            self.ai_result_text.config(state="normal")
+            self.ai_result_text.delete("1.0", tk.END)
+            self.ai_result_text.insert(tk.END, self.analysis_content)
+            self.ai_result_text.config(state="disabled")
             self.canvas.itemconfig(self.result_ai_win, state="normal")
 
     # 그래프
