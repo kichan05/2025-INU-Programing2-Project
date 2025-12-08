@@ -28,6 +28,10 @@ class PlayerEntryPage(tk.Frame):
         self.confirm_btn = self.canvas.create_text(cx, controller.h * 0.85, text="CONFIRM",
                                                   font=Typography.FONT_TITLE, fill="white")
 
+        self.loading_label = self.canvas.create_text(cx, cy, text="Initializing...",
+                                                     font=Typography.FONT_TITLE, fill="white",
+                                                     state="hidden")
+
         def on_enter_go(e):
             self.canvas.itemconfig(self.confirm_btn, fill="yellow", text="OK")
             self.canvas.config(cursor="hand2")
@@ -56,6 +60,13 @@ class PlayerEntryPage(tk.Frame):
             return
 
         self.controller.player_name = name.upper()
-        # 입력 위젯에서 포커스를 해제하여 UI 멈춤 현상 방지
-        self.focus_set()
-        self.controller.show_frame("StartPage")
+        # Hide entry and button
+        self.canvas.itemconfig(self.entry_win, state="hidden")
+        self.canvas.itemconfig(self.confirm_btn, state="hidden")
+
+        # Show loading text
+        self.canvas.itemconfig(self.loading_label, state="normal")
+        self.canvas.itemconfig(self.loading_label, text="Connecting to Arduino... Please wait.")
+
+        # Start hardware initialization
+        self.controller.start_initialization_thread()

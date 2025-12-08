@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import tkinter as tk
+import threading
 import pyfirmata2
 import pyttsx3
 from PIL import Image, ImageTk
@@ -32,6 +33,7 @@ class ReactionGameApp:
 
         self.board = None
         self.tts_engine = None
+        self.init_thread = None
 
         self.player_name = None
         self.results = []
@@ -51,9 +53,6 @@ class ReactionGameApp:
 
         self.frames = {}
 
-        # UI가 먼저 그려진 후, 하드웨어 초기화 실행
-        self.root.after(100, self.deferred_init)
-
         # 페이지 초기화
         for F in (StartPage, PlayerEntryPage, Game1Page, Game2Page, Game3Page, ResultPage, StatsPage):
             page_name = F.__name__
@@ -63,7 +62,7 @@ class ReactionGameApp:
 
         self.show_frame("PlayerEntryPage")
 
-    def deferred_init(self):
+    def initialize_hardware(self):
         self.setup_arduino()
         try:
             self.tts_engine = pyttsx3.init()
@@ -71,6 +70,17 @@ class ReactionGameApp:
         except Exception as e:
             print(f"TTS Engine Error: {e}")
             self.tts_engine = None
+
+    def start_initialization_thread(self):
+        self.init_thread = threading.Thread(target=self.initialize_hardware, daemon=True)
+        self.init_thread.start()
+        self.check_init_thread()
+
+    def check_init_thread(self):
+        if self.init_thread.is_alive():
+            self.root.after(100, self.check_init_thread)
+        else:
+            self.show_frame("StartPage")
 
     # 종료 처리
     def on_closing(self):
