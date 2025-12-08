@@ -26,22 +26,8 @@ class StatsPage(tk.Frame):
                                    command=self.request_ai_analysis)
         self.loading_ai_label = tk.Label(self, text="AI가 분석 중입니다...", font=Typography.FONT_NORMAL, bg="white", fg="blue")
 
-        # Create a frame for the scrollable text widget
-        self.ai_result_frame = tk.Frame(self, bg="#F0F0F0")
-        self.ai_result_text = tk.Text(self.ai_result_frame, wrap="word", height=5, width=70,
-                                      font=Typography.FONT_NORMAL, bg="#F0F0F0",
-                                      bd=0, highlightthickness=0)
-        self.ai_result_scrollbar = tk.Scrollbar(self.ai_result_frame, command=self.ai_result_text.yview)
-        self.ai_result_text.config(yscrollcommand=self.ai_result_scrollbar.set)
-        
-        self.ai_result_scrollbar.pack(side="right", fill="y")
-        self.ai_result_text.pack(side="left", fill="both", expand=True)
-
-
         self.ai_button_win = self.canvas.create_window(self.controller.w - 200, 200, window=self.ai_button, state="hidden")
         self.loading_ai_win = self.canvas.create_window(self.controller.cx, self.controller.h - 150, window=self.loading_ai_label, state="hidden")
-        self.result_ai_win = self.canvas.create_window(self.controller.cx, self.controller.h - 150, window=self.ai_result_frame, state="hidden")
-
 
     def on_show(self):
         self.canvas.delete("ui")
@@ -55,7 +41,6 @@ class StatsPage(tk.Frame):
     def hide_ai_elements(self):
         self.canvas.itemconfig(self.ai_button_win, state="hidden")
         self.canvas.itemconfig(self.loading_ai_win, state="hidden")
-        self.canvas.itemconfig(self.result_ai_win, state="hidden")
 
     def draw_ui(self):
         cx = self.controller.cx
@@ -128,7 +113,6 @@ class StatsPage(tk.Frame):
             return
 
         self.canvas.itemconfig(self.loading_ai_win, state="normal")
-        self.canvas.itemconfig(self.result_ai_win, state="hidden")
 
         # Define the worker function for the thread right here or as a private method
         def _get_ai_analysis_thread(p_name):
@@ -148,13 +132,10 @@ class StatsPage(tk.Frame):
             # Schedule the next check
             self.after(300, self.update_ai_status, counter + 1)
         else:
-            # Thread is done, show the results
+            # Thread is done, hide loading label, store content, and switch page
             self.canvas.itemconfig(self.loading_ai_win, state="hidden")
-            self.ai_result_text.config(state="normal")
-            self.ai_result_text.delete("1.0", tk.END)
-            self.ai_result_text.insert(tk.END, self.analysis_content)
-            self.ai_result_text.config(state="disabled")
-            self.canvas.itemconfig(self.result_ai_win, state="normal")
+            self.controller.ai_analysis_content = self.analysis_content
+            self.controller.show_frame("AIResultPage")
 
     # 그래프
     def load_player_list(self):

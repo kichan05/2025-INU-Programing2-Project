@@ -14,6 +14,7 @@ from ui.player_enter_page import PlayerEntryPage
 from ui.result_page import ResultPage
 from ui.start_page import StartPage
 from ui.stats_page import StatsPage
+from ui.ai_result_page import AIResultPage
 
 
 class ReactionGameApp:
@@ -34,6 +35,7 @@ class ReactionGameApp:
         self.board = None
         self.tts_engine = None
         self.init_thread = None
+        self.ai_analysis_content = ""
 
         self.player_name = None
         self.results = []
@@ -54,7 +56,7 @@ class ReactionGameApp:
         self.frames = {}
 
         # 페이지 초기화
-        for F in (StartPage, PlayerEntryPage, Game1Page, Game2Page, Game3Page, ResultPage, StatsPage):
+        for F in (StartPage, PlayerEntryPage, Game1Page, Game2Page, Game3Page, ResultPage, StatsPage, AIResultPage):
             page_name = F.__name__
             frame = F(parent=self.container, controller=self)
             self.frames[page_name] = frame
