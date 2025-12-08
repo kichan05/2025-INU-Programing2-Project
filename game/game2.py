@@ -7,7 +7,7 @@ from scipy.spatial import distance as dist
 from util import calculate_score
 
 config = {
-    "is_buzz_able" : False
+    "is_buzz_able" : True
 }
 
 
@@ -81,7 +81,7 @@ def run_game2_engine(buzzer, cap, face_mesh, num_rounds, screen_w, screen_h):
                 rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 results = face_mesh.process(rgb_frame)
                 h, w, _ = frame.shape
-                current_ear = 0
+                current_ear_open = 0
                 if results.multi_face_landmarks:
                     landmarks = results.multi_face_landmarks[0].landmark
                     mesh_points = [(int(pt.x * w), int(pt.y * h)) for pt in landmarks]
@@ -99,7 +99,7 @@ def run_game2_engine(buzzer, cap, face_mesh, num_rounds, screen_w, screen_h):
 
                     left_ear = calculate_ear(LEFT_EYE, mesh_points)
                     right_ear = calculate_ear(RIGHT_EYE, mesh_points)
-                    current_ear = (left_ear + right_ear) / 2.0
+                    current_ear_open = (left_ear + right_ear) / 2.0
                 center_x, center_y = w // 2, h // 2
 
                 if game_state == "WAITING":
@@ -117,7 +117,7 @@ def run_game2_engine(buzzer, cap, face_mesh, num_rounds, screen_w, screen_h):
                 elif game_state == "MEASURING":
                     draw_text_with_outline(frame, "BLINK NOW!", (center_x - 150, center_y), 2.0, 4,
                                            text_color=(0, 0, 255))
-                    if 0.0 < current_ear < 0.22:
+                    if 0.0 < current_ear_open < 0.22:
                         end_time = time.time()
                         reaction_sec = end_time - start_time
                         if buzzer: buzzer.write(1)

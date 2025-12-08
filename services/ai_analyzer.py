@@ -21,7 +21,7 @@ def get_analysis_for_game_stats(stats_data: dict) -> str:
         stats_str += f"  - Total round: {data.get('total_rounds', 'N/A')}\n"
         stats_str += f"  - 평균 점수: {data.get('avg_score', 'N/A'):.2f}\n\n"
 
-        prompt_template = f"""
+    prompt_template = f"""
         You are an expert AI in cognitive science and digital healthcare, specifically designed to analyze signs of 'Digital Dementia' (cognitive decline due to technology overuse).
 
         The player's name is '{stats_data.get("player_name", "Player")}'.
