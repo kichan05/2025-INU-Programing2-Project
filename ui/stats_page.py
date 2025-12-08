@@ -130,23 +130,26 @@ class StatsPage(tk.Frame):
         self.canvas.itemconfig(self.loading_ai_win, state="normal")
         self.canvas.itemconfig(self.result_ai_win, state="hidden")
 
-        # Run the database query and AI call in a background thread
-        self.ai_thread = threading.Thread(target=self._get_ai_analysis_thread, args=(player_name,), daemon=True)
+        # Define the worker function for the thread right here or as a private method
+        def _get_ai_analysis_thread(p_name):
+            stats_data = self.controller.database_manager.get_all_stats_for_player(p_name)
+            self.analysis_content = ai_analyzer.get_analysis_for_game_stats(stats_data)
+
+        self.ai_thread = threading.Thread(target=_get_ai_analysis_thread, args=(player_name,), daemon=True)
         self.ai_thread.start()
-        self.check_ai_thread()
+        self.update_ai_status()
 
-    def _get_ai_analysis_thread(self, player_name):
-        """Worker function for the AI thread."""
-        stats_data = self.controller.database_manager.get_all_stats_for_player(player_name)
-        self.analysis_content = ai_analyzer.get_analysis_for_game_stats(stats_data)
-
-    def check_ai_thread(self):
-        """Polling function to check if the AI thread is done."""
+    def update_ai_status(self, counter=0):
+        """Animates a loading text and polls for the AI thread's completion."""
         if self.ai_thread.is_alive():
-            self.after(100, self.check_ai_thread)
+            # Animate the loading text
+            dots = "." * (counter % 4)
+            self.loading_ai_label.config(text=f"AI가 분석 중입니다{dots}")
+            # Schedule the next check
+            self.after(300, self.update_ai_status, counter + 1)
         else:
+            # Thread is done, show the results
             self.canvas.itemconfig(self.loading_ai_win, state="hidden")
-            # Update the text widget with the new content
             self.ai_result_text.config(state="normal")
             self.ai_result_text.delete("1.0", tk.END)
             self.ai_result_text.insert(tk.END, self.analysis_content)
