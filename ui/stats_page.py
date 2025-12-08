@@ -126,9 +126,10 @@ class StatsPage(tk.Frame):
     def update_ai_status(self, counter=0):
         """Animates a loading text and polls for the AI thread's completion."""
         if self.ai_thread.is_alive():
-            # Animate the loading text
-            dots = "." * (counter % 4)
-            self.loading_ai_label.config(text=f"AI가 분석 중입니다{dots}")
+            # Animate the loading text with a spinning character
+            spinner_chars = ["|", "/", "-", "\\"]
+            spinner = spinner_chars[counter % len(spinner_chars)]
+            self.loading_ai_label.config(text=f"AI가 분석 중입니다 {spinner}")
             # Schedule the next check
             self.after(300, self.update_ai_status, counter + 1)
         else:
