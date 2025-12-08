@@ -3,6 +3,8 @@ import tkinter as tk
 from tkinter import messagebox
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import threading
+from services import ai_analyzer
 from .typography import Typography
 
 
@@ -16,13 +18,34 @@ class StatsPage(tk.Frame):
         self.chart_widget = None
         self.selected_game = tk.StringVar(value="GAME1")
 
+        self.ai_thread = None
+        self.analysis_content = ""
+
+        # AI Analysis UI Elements
+        self.ai_button = tk.Button(self, text="AI 분석 요청", font=Typography.FONT_NORMAL,
+                                   command=self.request_ai_analysis)
+        self.loading_ai_label = tk.Label(self, text="AI가 분석 중입니다...", font=Typography.FONT_NORMAL, bg="white", fg="blue")
+        self.ai_result_widget = tk.Message(self, text="", width=600, font=Typography.FONT_NORMAL,
+                                           bg="#F0F0F0", justify="left")
+
+        self.ai_button_win = self.canvas.create_window(controller.w - 200, 200, window=self.ai_button, state="hidden")
+        self.loading_ai_win = self.canvas.create_window(controller.cx, self.controller.h-150, window=self.loading_ai_label, state="hidden")
+        self.result_ai_win = self.canvas.create_window(controller.cx, self.controller.h-150, window=self.ai_result_widget, state="hidden")
+
+
     def on_show(self):
         self.canvas.delete("ui")
         if self.chart_widget:
             self.chart_widget.destroy()
             self.chart_widget = None
+        self.hide_ai_elements()
         self.draw_ui()
         self.load_player_list()
+
+    def hide_ai_elements(self):
+        self.canvas.itemconfig(self.ai_button_win, state="hidden")
+        self.canvas.itemconfig(self.loading_ai_win, state="hidden")
+        self.canvas.itemconfig(self.result_ai_win, state="hidden")
 
     def draw_ui(self):
         cx = self.controller.cx
@@ -84,7 +107,37 @@ class StatsPage(tk.Frame):
 
     def change_mode(self, mode):
         self.selected_game.set(mode)
-        self.on_show()
+        # Re-draw the graph for the new mode, which will also hide AI elements
+        self.draw_graph(self.entry.get())
+
+    # --- AI Analysis Methods ---
+    def request_ai_analysis(self):
+        player_name = self.entry.get().strip()
+        if not player_name:
+            messagebox.showerror("Error", "Please select a player first.")
+            return
+
+        self.canvas.itemconfig(self.loading_ai_win, state="normal")
+        self.canvas.itemconfig(self.result_ai_win, state="hidden")
+
+        # Run the database query and AI call in a background thread
+        self.ai_thread = threading.Thread(target=self._get_ai_analysis_thread, args=(player_name,), daemon=True)
+        self.ai_thread.start()
+        self.check_ai_thread()
+
+    def _get_ai_analysis_thread(self, player_name):
+        """Worker function for the AI thread."""
+        stats_data = self.controller.database_manager.get_all_stats_for_player(player_name)
+        self.analysis_content = ai_analyzer.get_analysis_for_game_stats(stats_data)
+
+    def check_ai_thread(self):
+        """Polling function to check if the AI thread is done."""
+        if self.ai_thread.is_alive():
+            self.after(100, self.check_ai_thread)
+        else:
+            self.canvas.itemconfig(self.loading_ai_win, state="hidden")
+            self.ai_result_widget.config(text=self.analysis_content)
+            self.canvas.itemconfig(self.result_ai_win, state="normal")
 
     # 그래프
     def load_player_list(self):
@@ -107,8 +160,13 @@ class StatsPage(tk.Frame):
             self.draw_graph(name)
 
     def draw_graph(self, name):
-        if not name: return
-        if self.chart_widget: self.chart_widget.destroy()
+        if not name:
+            return
+
+        if self.chart_widget:
+            self.chart_widget.destroy()
+
+        self.hide_ai_elements()
 
         mode = self.selected_game.get()
         data = self.controller.database_manager.get_stats_by_player(mode, name)
@@ -116,6 +174,9 @@ class StatsPage(tk.Frame):
         if not data:
             messagebox.showinfo("Info", "No data found for this player.")
             return
+
+        # Show the AI analysis button as data is available
+        self.canvas.itemconfig(self.ai_button_win, state="normal")
 
         dates = [datetime.datetime.strptime(row[0], "%Y-%m-%d").strftime("%m/%d") for row in data]
         max_scores = [row[1] for row in data]

@@ -72,5 +72,38 @@ class DatabaseManager:
         )
         return [row[0] for row in self.cursor.fetchall()]
 
+    def get_all_stats_for_player(self, player_name):
+        stats_by_game = {}
+        game_modes = ["GAME1", "GAME2", "GAME3"]
+
+        for mode in game_modes:
+            # reaction_time < 9000 to filter out invalid/failed rounds
+            self.cursor.execute(
+                """SELECT
+                    AVG(reaction_time),
+                    MIN(reaction_time),
+                    COUNT(*),
+                    AVG(score)
+                FROM
+                    history
+                WHERE
+                    player_name = ? AND game_mode = ? AND reaction_time < 9000
+                """,
+                (player_name, mode)
+            )
+            result = self.cursor.fetchone()
+            if result and result[0] is not None:
+                stats_by_game[mode] = {
+                    'avg_r_time': result[0],
+                    'best_r_time': result[1],
+                    'total_rounds': result[2],
+                    'avg_score': result[3]
+                }
+
+        return {
+            "player_name": player_name,
+            "games": stats_by_game
+        }
+
     def close(self):
         self.conn.close();
