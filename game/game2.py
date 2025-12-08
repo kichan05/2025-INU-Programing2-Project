@@ -6,6 +6,10 @@ import numpy as np
 from scipy.spatial import distance as dist
 from util import calculate_score
 
+config = {
+    "is_buzz_able" : False
+}
+
 
 def run_game2_engine(buzzer, cap, face_mesh, num_rounds, screen_w, screen_h):
     all_r_times = []
@@ -101,7 +105,7 @@ def run_game2_engine(buzzer, cap, face_mesh, num_rounds, screen_w, screen_h):
                 if game_state == "WAITING":
                     draw_text_with_outline(frame, "WAIT FOR SOUND...", (30, 50), 1.0, 2)
                     if time.time() - wait_start > random_wait:
-                        if buzzer: buzzer.write(0)
+                        if buzzer and config["is_buzz_able"]: buzzer.write(0)
                         start_time = time.time()
                         beep_start_time = time.time()
                         game_state = "BEEPING"
